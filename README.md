@@ -21,3 +21,7 @@ function App() {
 
 export default App;
 ```
+
+# Screens
+
+![Chart view](https://github.com/freecree/crypto-candles/blob/main/src/assets/screen.PNG?raw=true)
