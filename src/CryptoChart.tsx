@@ -1,6 +1,6 @@
 import Binance from 'binance-api-node';
 import { useEffect, useState } from 'react';
-import { CandleChartResult } from 'binance-api-node';
+
 import { Chart } from 'react-chartjs-2';
 import 'chartjs-adapter-luxon';
 import 'luxon';
@@ -28,6 +28,7 @@ import {
 } from 'chartjs-chart-financial';
 import { generatePurchaseSignals } from './utils';
 import { ChartData } from 'chart.js';
+import { ICandle, IPurchaseSignal, IcandlesOptions } from './types';
 
 ChartJS.register(
   CategoryScale,
@@ -47,20 +48,40 @@ ChartJS.register(
 const client = Binance();
 
 function CryptoChart() {
-  const [candles, setCandles] = useState<CandleChartResult[]>([]);
+  const [candles, setCandles] = useState<ICandle[]>([]);
+  const [purchaseSignals, setPurchaseSignals] = useState<IPurchaseSignal[]>([]);
+  const [candlesOptions] = useState<IcandlesOptions>({
+    pair: 'BTCUSDT',
+    period: '1M',
+  });
 
   useEffect(() => {
+    client.ws.candles(candlesOptions.pair, candlesOptions.period, (candle) => {
+      setCandles((prevCandles) => {
+        const lastPrevCandle = prevCandles[prevCandles.length - 1];
+        const newCandle = {
+          ...candle,
+          openTime: candle.startTime,
+        } as ICandle;
+
+        if (lastPrevCandle.openTime === newCandle.openTime) {
+          return [...prevCandles.slice(0, -1), newCandle];
+        }
+        return [...prevCandles, newCandle];
+      });
+    });
+
     const fetchCandles = async () => {
       const fetchedCandles = await client.candles({
-        symbol: 'BTCUSDT',
-        interval: '1M',
+        symbol: candlesOptions.pair,
+        interval: candlesOptions.period,
       });
       setCandles(fetchedCandles);
+      setPurchaseSignals(generatePurchaseSignals(fetchedCandles));
     };
-    fetchCandles();
-  }, []);
 
-  const purchaseSignals = generatePurchaseSignals(candles);
+    fetchCandles();
+  }, [candlesOptions]);
 
   const getArrowImage = (imagePath: string) => {
     const arrowImage = new Image();

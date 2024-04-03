@@ -1,6 +1,5 @@
-// import CryptoChart from './CryptoChart';
-// import { CryptoChart } from 'crypto-candles';
 import { CryptoChart } from 'crypto-candles';
+// import { CryptoChart } from '.';
 
 function App() {
   return (
